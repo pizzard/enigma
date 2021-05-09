@@ -103,3 +103,37 @@ The basic approach to the attack is as follows:
 2. This attack is a variant of that originally proposed by James Gillogly. His work on this is still available via the web archive [here](https://web.archive.org/web/20060720040135/http://members.fortunecity.com/jpeschel/gillog1.htm).
 
 3. If you'd like a more visual example of both encryption and cracking enigma codes, the Cryptool project is a great tool for this. [Cryptool 2](https://www.cryptool.org/en/) has a great visualiser and can run cracking code similar to my own. I used cryptool to write the tests I used to make sure my own enigma implementation was working.
+
+
+## Motivation 
+
+I was suprised by the shown durations and suspected that with a optimized implmentation it should be possible to crack enigma much faster. SO I decided to give it a try. 
+As my performance measurement experience is limited to C++, I had to port the implmentation to C++ first. 
+
+## Port to C++ 
+
+This was relatively straightforward. 
+I only had to add a few more test of the components of the enigma machine, as some subtle errors in Rotor logic crept in. 
+I tried to make as much as possible of the enigma machine constexpr, to enable compile time checking. This resulted in replacing alot of the strings with numbers, as compile time string handling is somewhat unpleasant in current C++. 
+
+Then I ported the analysis part (at least most of it) to C++. This was straight forward, except the file handling of the data files was a bit annoying, so I made them header files and stored the data statically. 
+
+## First runs. 
+
+After a bit of debugging, my attack using iOC and bigrams ran. 
+Initial runtime of my setup was:
+
+The intital port started with an execution time of 22846.3ms compred to 31080 for the javav version, pretty comparable.
+
+I quickly was confised that the machine would find the right rotor setting, but would fail to find the rights ring settings. 
+I gave the machine the correct rotors and plugboard settings, and a plaintext score function and even given those the system would not find the correct ring settings. 
+I suppose there might be a bug regarding the search of these. I compared to the java code, and my result are identical to the java code. So i assumed the problem did not arise in the port.
+
+TODO: why are my quadgrams off, where bigrams and wkt work?
+
+[perf-kernel.svg]
+Fir performance analysis with perf yielded predictable the result that all the time was spend in the rotor function, so a more in depth look was genereated using valgrind tool callgrind. 
+
+Callgrind shows that a lot of work was done in the Rotor::Create function where the wiring were converted from strings and the inverseWiring had to be created. Doing that everyx time seemed not necessary.
+
+

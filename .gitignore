@@ -4,3 +4,8 @@
 .idea/shelf/*
 .idea/libraries/*.xml
 out/*
+.cproject
+.project
+.settings/
+CMakeLists.txt
+build/
