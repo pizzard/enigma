@@ -33,6 +33,10 @@ public:
     {
       wiring[first] = second;
       wiring[second] = first;
+      wiring[first+26] = second;
+      wiring[second+26] = first;
+      wiring[first+52] = second;
+      wiring[second+52] = first;
       if (plugged[first] || plugged[second])
         throw "already plugged";
 
@@ -43,7 +47,7 @@ public:
     std::string ToString() const
     {
       std::string s = "";
-      for(int i = 0; i < wiring.size(); ++i)
+      for(int i = 0; i < 26; ++i)
       {
         if(wiring[i] <= i)
           continue;

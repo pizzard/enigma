@@ -120,13 +120,12 @@ Then I ported the analysis part (at least most of it) to C++. This was straight 
 
 ## First runs. 
 
-After a bit of debugging, my attack using iOC and bigrams ran. 
-Initial runtime of my setup was:
+After a bit of debugging, my attack using IoC and Bigrams ran. 
 
-The intital port started with an execution time of 22846.3ms compred to 31080 for the javav version, pretty comparable.
+The intital port started with an execution time of 22846.3ms compred to 31080 for the java version, pretty comparable.
 
-I quickly was confised that the machine would find the right rotor setting, but would fail to find the rights ring settings. 
-I gave the machine the correct rotors and plugboard settings, and a plaintext score function and even given those the system would not find the correct ring settings. 
+I quickly was confused that the machine would find the right rotor setting, but would fail to find the rights ring settings. 
+I gave the algorithm the correct rotors and plugboard settings, and a plaintext score function and even given those the system would not find the correct ring settings. 
 I suppose there might be a bug regarding the search of these. I compared to the java code, and my result are identical to the java code. So i assumed the problem did not arise in the port.
 
 TODO: why are my quadgrams off, where bigrams and wkt work?
@@ -134,6 +133,28 @@ TODO: why are my quadgrams off, where bigrams and wkt work?
 [perf-kernel.svg]
 Fir performance analysis with perf yielded predictable the result that all the time was spend in the rotor function, so a more in depth look was genereated using valgrind tool callgrind. 
 
-Callgrind shows that a lot of work was done in the Rotor::Create function where the wiring were converted from strings and the inverseWiring had to be created. Doing that everyx time seemed not necessary.
+Callgrind shows that a lot of work was done in the Rotor::Create function where the wiring were converted from strings and the inverseWiring had to be created. Doing that every time seemed not necessary.
 
+By adding a static RotorMapping which is always consulted the runtime of the program dropped to 20936.6ms. A signifcant improvement, but not so big.
 
+Further analysis shown that 75% of the total runtime is spent in the encipher() function in the rotor and 10% (half-half) in isAtNotch() and turnover().
+
+Deetailed analysis of the encipher() function resulted in the module operations being a major problem, as module of something which is not a power of 2 will have significant cost. 
+
+The first modulo operation is when the cuurrent rotor shift and the input k gets added. to eliminate this modulo whe precompute adn store the currentRotorShift  as (rotorPosition  + 26 - ringSetting ) %26 and in every turnover we just update the shift in parallel. This pushed extra work into turnover() now updating two states, but now the shift does not need to be calcualted in every cipher operation.
+The lookup in the current wiring array happens at position k + shift now. 
+We know now that bot the shift and k can only be up to 26.
+Instead of computing modulo 26, we can just double the wiring array size, repeating the charcters from pos 26 to 52. 
+Doing that allow to just omit the modulo operation as there will always be a valid lookup position. 
+This reduces the runtime to 12979.5ms.
+
+The next %26 occurs for the return value. Here the range of the value can be 0 to 52 and needs to be truncated to 26. 
+Here we can just omit the module again, if we then triple our array to allow values up to 78. No we know that we can just mit integer up to 52 safely. 
+We basically use the mapping to control our value sizes. All conversions to printable ascii characters to now need a modulo 26 to be useful, luckily thats not hard.
+This recudes the runtime to 6701.39ms
+
+After this significant changes, a new analysis of the performance is conducted.
+The the conversion from and to ascii chars is now a significant bottleneck, as it now involves the modulo 26 operation. 
+In order to minimize this dependency the score function is changed to operate 
+on the converted integers in a fixed size array, so the string representation is not need there.
+This recudes the runtime to 5290.51ms

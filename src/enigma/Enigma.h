@@ -77,10 +77,10 @@ public:
     }
 
     // encrypts already converted integer sequences
-    template<int T>
-    constexpr std::array<int, T> encrypt(const std::array<int, T>& input) {
-      std::array<char, T> out;
-        for (int i = 0; i < T; i++) {
+    template<class T>
+    constexpr T encrypt(const T& input) {
+        T out{};
+        for (int i = 0; i <out.size(); i++) {
           out[i] = encrypt(input[i]);
         }
         return out;
@@ -97,4 +97,5 @@ inline std::string encryptString(Enigma& e, const char * input) {
     }
     return out;
 }
+
 #endif /* ENIGMA_ENIGMA_H */

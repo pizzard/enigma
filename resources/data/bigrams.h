@@ -21,6 +21,8 @@ struct BigramContainer
 
   constexpr float scoreBigram(int b1, int b2) const
   {
+    b1 %= 26;
+    b2 %= 26;
     return bigrams[b1 * 26 + b2];
   }
 

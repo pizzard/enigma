@@ -22,6 +22,10 @@ struct QuadgramContainer
 
   constexpr float score(int b1, int b2, int b3, int b4) const
   {
+    b1 %=26;
+    b2 %=26;
+    b3 %=26;
+    b4 %=26;
     return quadgrams[((b1 * 26 + b2) * 26 + b3) *26 + b4];
   }
 

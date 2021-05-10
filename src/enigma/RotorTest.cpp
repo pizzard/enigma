@@ -5,10 +5,10 @@
 TEST(Enigma, IdentityRotor) {
   constexpr Rotor id = Rotor::Create(0, 0, 0);
 
-  for(int c: identityEncoding)
+  for(int i = 0; i < 26; ++i)
   {
-    EXPECT_EQ(c, id.forward(c));
-    EXPECT_EQ(c, id.backward(c));
+    EXPECT_EQ(indexToChar(identityEncoding[i]), indexToChar(id.forward(identityEncoding[i])));
+    EXPECT_EQ(indexToChar(identityEncoding[i]), indexToChar(id.backward(identityEncoding[i])));
   }
 
 }
@@ -20,8 +20,8 @@ TEST(Enigma, FirstRotor) {
 
   for(int i = 0; i < 26; ++i)
   {
-    EXPECT_EQ(rotorwiring[i], id.forward(identityEncoding[i]));
-    EXPECT_EQ(identityEncoding[i], id.backward(rotorwiring[i]));
+    EXPECT_EQ(indexToChar(rotorwiring[i]), indexToChar(id.forward(identityEncoding[i])));
+    EXPECT_EQ(indexToChar(identityEncoding[i]), indexToChar(id.backward(rotorwiring[i])));
   }
 
 }

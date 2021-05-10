@@ -22,9 +22,9 @@ public:
         EIGHT
   };
 
-  template<class FitnessFunction>
+  template<int T, class FitnessFunction>
   static std::vector<ScoredEnigmaKey> findRotorConfiguration(
-      const char* ciphertext,
+      std::array<int, T> ciphertext,
       AvailableRotors rotors,
       Plugboard plugboard,
       const FitnessFunction& f) {
@@ -43,7 +43,6 @@ public:
       break;
     }
 
-    std::string result;
     std::vector<ScoredEnigmaKey> keySet ;
     keySet.reserve(100);
 
@@ -62,7 +61,7 @@ public:
             for (int j = 0; j < 26; j++) {
               for (int k = 0; k < 26; k++) {
                 Enigma e { { rotor1, rotor2, rotor3 }, 'B', { i, j, k }, { 0, 0, 0 }, plugboard };
-                result = encryptString(e, ciphertext);
+                std::array<int, T> result = e.encrypt(ciphertext);
                 float fitness = f.score(result);
                 if (fitness > bestKey.score) {
                   bestKey = ScoredEnigmaKey( { rotor1, rotor2, rotor3 }, { i, j, k }, {0,0,0},

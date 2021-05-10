@@ -18,6 +18,18 @@
         }
         return fitness;
     }
+    template<int T>
+    float score(const std::array<int, T>& text) {
+        float fitness = 0;
+        int current = 0;
+        int next = text[0]%26;
+        for (int i = 1; i < text.size(); i++) {
+            current = next;
+            next = text[i]%26;
+            fitness += bigram_scores.scoreBigram(current, next);
+        }
+        return fitness;
+    }
 };
 
 #endif

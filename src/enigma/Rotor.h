@@ -3,7 +3,7 @@
 
 #include <array>
 
-using Encoding = std::array<int, 26>;
+using Encoding = std::array<int, 26+26+26>;
 
 constexpr int charToIndex(const char k)
 {
@@ -11,14 +11,20 @@ constexpr int charToIndex(const char k)
 }
 constexpr char indexToChar(const int k)
 {
-  return k + 65;
+
+  return (k%26) + 65;
 }
 
 constexpr Encoding makeEncoding(const char* chars)
 {
   Encoding encoding{};
-  for(int i = 0; i < encoding.size(); ++i)
+  for(int i = 0; i < 26; ++i)
     encoding[i] = charToIndex(chars[i]);
+  for(int i = 26; i < 26*2; ++i)
+    encoding[i] = encoding[i-26];
+  for(int i = 52; i < 26*3; ++i)
+    encoding[i] = encoding[i-26];
+
   return encoding;
 }
 constexpr Encoding identityEncoding =  makeEncoding("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -39,10 +45,15 @@ struct RotorMapping{
 private:
   constexpr Encoding inverseWiring(const Encoding& wiring) const {
       Encoding inverse{};
-      for (int i = 0; i < wiring.size(); i++) {
+      for (int i = 0; i < 26; i++) {
           int forward = wiring[i];
           inverse[forward] = i;
       }
+      for(int i = 26; i < 26*2; ++i)
+        inverse[i] = inverse[i-26];
+      for(int i = 52; i < 26*3; ++i)
+        inverse[i] = inverse[i-26];
+
       return inverse;
   }
 };
@@ -53,6 +64,9 @@ class Rotor {
     int notchPosition;
     int secondaryNotchPosition;
     int ringSetting;
+    int currentRotorShift;
+//    int adjustedNotchPosition;
+//    int adjustedSecondaryNotchPosition;
 
 public:
     constexpr Rotor(const RotorMapping& mapping, int rotorPosition, int notchPosition, int secondaryNotchPosition, int ringSetting)
@@ -61,6 +75,9 @@ public:
       , notchPosition(notchPosition)
       , secondaryNotchPosition(secondaryNotchPosition)
       , ringSetting(ringSetting)
+      , currentRotorShift((rotorPosition  + 26 - ringSetting ) %26 )
+//      , adjustedNotchPosition((notchPosition + 26 - ringSetting) %26)
+//      , adjustedSecondaryNotchPosition((secondaryNotchPosition + 26 - ringSetting) %26)
     {
     }
 
@@ -100,10 +117,6 @@ public:
         return mapping.rotorNum;
     }
 
-    constexpr int getPosition() const {
-        return rotorPosition;
-    }
-
     constexpr int forward(int c)  const {
         return encipher(c, mapping.forwardWiring);
     }
@@ -118,15 +131,23 @@ public:
     }
 
     constexpr void turnover() {
-        rotorPosition = (rotorPosition + 1) % 26;
+        if(++currentRotorShift >= 26)
+            currentRotorShift = 0;
+        if(++rotorPosition >= 26)
+          rotorPosition = 0;
     }
 
 private:
+    // return value can go up to 52 to avoid modulo operations
     constexpr int encipher(int k, const Encoding& mapping) const {
-        int shift = rotorPosition - ringSetting;
-        return (mapping[(k + shift + 26) % 26] - shift + 26) % 26;
+        const int shift = currentRotorShift;
+        // as we have a 78 character wide landing pad
+        // and the upper limit for k is 52 and for shift 26
+        const int mapped_pos = (k + shift);
+        return mapping[mapped_pos] +26 - shift;
     }
 
 };
+
 
 #endif /* ENIGMA_ROTOR_H */
