@@ -58,22 +58,20 @@ public:
         c = plugboard.forward(c);
 
         // Right to left
-        char c1 = rightRotor.forward(c);
-        char c2 = middleRotor.forward(c1);
-        char c3 = leftRotor.forward(c2);
+        const int c1 = rightRotor.forward(c);
+        const int c2 = middleRotor.forward(c1);
+        const int c3 = leftRotor.forward(c2);
 
         // Reflector
-        char c4 = reflector.forward(c3);
+        const int c4 = reflector.forward(c3);
 
         // Left to right
-        char c5 = leftRotor.backward(c4);
-        char c6 = middleRotor.backward(c5);
-        char c7 = rightRotor.backward(c6);
+        const int c5 = leftRotor.backward(c4);
+        const int c6 = middleRotor.backward(c5);
+        const int c7 = rightRotor.backward(c6);
 
         // Plugboard out
-        c7 = plugboard.forward(c7);
-
-        return c7;
+        return plugboard.forward(c7);
     }
 
     // encrypts already converted integer sequences

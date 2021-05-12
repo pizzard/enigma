@@ -26,17 +26,18 @@ struct IoCFitness {
 
     template<class T>
     float score(const T& text) const {
-        std::array<int, 26> histogram{0};
+        std::array<int, 26+26+26> histogram{0};
 
         for (int c : text) {
-            histogram[c%26]++;
+            histogram[c]++;
         }
 
         int n = text.size();
         float total = 0.0f;
 
-        for (int v : histogram) {
-            total += (v * (v - 1));
+        for (int i = 0; i < 26; ++i) {
+          int v = histogram[i] + histogram[i + 26] + histogram[i + 52];
+          total += (v * (v - 1));
         }
 
         return total / (n * (n-1));

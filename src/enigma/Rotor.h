@@ -60,24 +60,25 @@ private:
 
 class Rotor {
     const RotorMapping& mapping;
-    int rotorPosition;
+  //  int rotorPosition;
     int notchPosition;
     int secondaryNotchPosition;
     int ringSetting;
     int currentRotorShift;
-//    int adjustedNotchPosition;
-//    int adjustedSecondaryNotchPosition;
+    int adjustedNotchPosition;
+    int adjustedSecondaryNotchPosition;
 
 public:
     constexpr Rotor(const RotorMapping& mapping, int rotorPosition, int notchPosition, int secondaryNotchPosition, int ringSetting)
       : mapping(mapping)
-      , rotorPosition(rotorPosition)
+    //  , rotorPosition(rotorPosition)
       , notchPosition(notchPosition)
       , secondaryNotchPosition(secondaryNotchPosition)
       , ringSetting(ringSetting)
       , currentRotorShift((rotorPosition  + 26 - ringSetting ) %26 )
-//      , adjustedNotchPosition((notchPosition + 26 - ringSetting) %26)
-//      , adjustedSecondaryNotchPosition((secondaryNotchPosition + 26 - ringSetting) %26)
+      , adjustedNotchPosition((notchPosition + 26 - ringSetting) %26)
+      , adjustedSecondaryNotchPosition(secondaryNotchPosition == -1 ? -1
+          :(secondaryNotchPosition + 26 - ringSetting) %26)
     {
     }
 
@@ -126,15 +127,13 @@ public:
     }
 
     constexpr bool isAtNotch() {
-      return notchPosition == rotorPosition
-          || secondaryNotchPosition == rotorPosition;
+      return adjustedNotchPosition == currentRotorShift
+          || adjustedSecondaryNotchPosition == currentRotorShift;
     }
 
     constexpr void turnover() {
         if(++currentRotorShift >= 26)
             currentRotorShift = 0;
-        if(++rotorPosition >= 26)
-          rotorPosition = 0;
     }
 
 private:
