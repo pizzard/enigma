@@ -18,18 +18,18 @@ public:
         // little error checking here, we assume always
         // two characters follows by a space.
         // if that doesn't hold up, all bets are off.
-        int first = charToIndex(plug[0]);
-        int second = charToIndex(plug[1]);
+        int8_t first = charToIndex(plug[0]);
+        int8_t second = charToIndex(plug[1]);
         addPlug(first, second);
       }
     }
 
     constexpr Plugboard(const Encoding& e): wiring(e){}
-    constexpr int forward(int c) const {
+    constexpr int8_t forward(int8_t c) const {
         return wiring[c];
     }
 
-    constexpr void addPlug(int first, int second)
+    constexpr void addPlug(int8_t first, int8_t second)
     {
       wiring[first] = second;
       wiring[second] = first;
@@ -47,7 +47,7 @@ public:
     std::string ToString() const
     {
       std::string s = "";
-      for(int i = 0; i < 26; ++i)
+      for(int8_t i = 0; i < 26; ++i)
       {
         if(wiring[i] <= i)
           continue;

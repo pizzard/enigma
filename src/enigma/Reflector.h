@@ -24,7 +24,7 @@ public:
         }
     }
 
-    constexpr int forward(int c) const {
+    constexpr int8_t forward(int8_t c) const {
         return forwardWiring[c];
     }
 

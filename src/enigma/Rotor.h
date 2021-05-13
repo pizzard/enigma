@@ -3,13 +3,13 @@
 
 #include <array>
 
-using Encoding = std::array<int, 26+26+26>;
+using Encoding = std::array<int8_t, 26+26+26>;
 
-constexpr int charToIndex(const char k)
+constexpr int8_t charToIndex(const char k)
 {
   return k - 65;
 }
-constexpr char indexToChar(const int k)
+constexpr char indexToChar(const int8_t k)
 {
 
   return (k%26) + 65;
@@ -18,11 +18,11 @@ constexpr char indexToChar(const int k)
 constexpr Encoding makeEncoding(const char* chars)
 {
   Encoding encoding{};
-  for(int i = 0; i < 26; ++i)
+  for(int8_t i = 0; i < 26; ++i)
     encoding[i] = charToIndex(chars[i]);
-  for(int i = 26; i < 26*2; ++i)
+  for(int8_t i = 26; i < 26*2; ++i)
     encoding[i] = encoding[i-26];
-  for(int i = 52; i < 26*3; ++i)
+  for(int8_t i = 52; i < 26*3; ++i)
     encoding[i] = encoding[i-26];
 
   return encoding;
@@ -31,11 +31,11 @@ constexpr Encoding identityEncoding =  makeEncoding("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 struct RotorMapping{
 
-  int rotorNum;
+  int8_t rotorNum;
   Encoding forwardWiring;
   Encoding backwardWiring;
 
-  constexpr RotorMapping(int num, const Encoding& forward)
+  constexpr RotorMapping(int8_t num, const Encoding& forward)
     : rotorNum(num)
     , forwardWiring(forward)
     , backwardWiring(inverseWiring(forward))
@@ -45,13 +45,13 @@ struct RotorMapping{
 private:
   constexpr Encoding inverseWiring(const Encoding& wiring) const {
       Encoding inverse{};
-      for (int i = 0; i < 26; i++) {
-          int forward = wiring[i];
+      for (int8_t i = 0; i < 26; i++) {
+          int8_t forward = wiring[i];
           inverse[forward] = i;
       }
-      for(int i = 26; i < 26*2; ++i)
+      for(int8_t i = 26; i < 26*2; ++i)
         inverse[i] = inverse[i-26];
-      for(int i = 52; i < 26*3; ++i)
+      for(int8_t i = 52; i < 26*3; ++i)
         inverse[i] = inverse[i-26];
 
       return inverse;
@@ -60,16 +60,17 @@ private:
 
 class Rotor {
     const RotorMapping& mapping;
-  //  int rotorPosition;
-    int notchPosition;
-    int secondaryNotchPosition;
-    int ringSetting;
-    int currentRotorShift;
-    int adjustedNotchPosition;
-    int adjustedSecondaryNotchPosition;
+  //  int8_t rotorPosition;
+    int8_t notchPosition;
+    int8_t secondaryNotchPosition;
+    int8_t ringSetting;
+    int8_t currentRotorShift;
+    int8_t adjustedNotchPosition;
+    bool hasSecondaryNotch;
+    int8_t adjustedSecondaryNotchPosition;
 
 public:
-    constexpr Rotor(const RotorMapping& mapping, int rotorPosition, int notchPosition, int secondaryNotchPosition, int ringSetting)
+    constexpr Rotor(const RotorMapping& mapping, int8_t rotorPosition, int8_t notchPosition, int8_t secondaryNotchPosition, int8_t ringSetting)
       : mapping(mapping)
     //  , rotorPosition(rotorPosition)
       , notchPosition(notchPosition)
@@ -77,6 +78,7 @@ public:
       , ringSetting(ringSetting)
       , currentRotorShift((rotorPosition  + 26 - ringSetting ) %26 )
       , adjustedNotchPosition((notchPosition + 26 - ringSetting) %26)
+      , hasSecondaryNotch(secondaryNotchPosition != -1)
       , adjustedSecondaryNotchPosition(secondaryNotchPosition == -1 ? -1
           :(secondaryNotchPosition + 26 - ringSetting) %26)
     {
@@ -92,7 +94,8 @@ public:
     static constexpr RotorMapping map8{8, makeEncoding("FKQHTLXOCBJSPDZRAMEWNIUYGV")};
     static constexpr RotorMapping map0{0, identityEncoding};
 
-    static constexpr Rotor Create(int rotorNum, int rotorPosition, int ringSetting)
+
+    static constexpr Rotor Create(int8_t rotorNum, int8_t rotorPosition, int8_t ringSetting)
     {
       if(rotorNum ==  1)
           return Rotor(map1, rotorPosition, 16, -1,  ringSetting);
@@ -114,21 +117,22 @@ public:
           return Rotor(map0, rotorPosition, 0, -1, ringSetting);
     }
 
-    constexpr int getName() const {
+    constexpr int8_t getName() const {
         return mapping.rotorNum;
     }
 
-    constexpr int forward(int c)  const {
+    constexpr int8_t forward(int8_t c)  const {
         return encipher(c, mapping.forwardWiring);
     }
 
-    constexpr int backward(int c) const {
+    constexpr int8_t backward(int8_t c) const {
         return encipher(c, mapping.backwardWiring);
     }
 
     constexpr bool isAtNotch() {
       return adjustedNotchPosition == currentRotorShift
-          || adjustedSecondaryNotchPosition == currentRotorShift;
+          || (hasSecondaryNotch &&
+              adjustedSecondaryNotchPosition == currentRotorShift);
     }
 
     constexpr void turnover() {
@@ -136,13 +140,18 @@ public:
             currentRotorShift = 0;
     }
 
+    constexpr void resetPosition(int pos) {
+      currentRotorShift = (pos  + 26 - ringSetting ) %26;
+    }
+
+
 private:
     // return value can go up to 52 to avoid modulo operations
-    constexpr int encipher(int k, const Encoding& mapping) const {
-        const int shift = currentRotorShift;
+    constexpr int8_t encipher(int8_t k, const Encoding& mapping) const {
+        const int8_t shift = currentRotorShift;
         // as we have a 78 character wide landing pad
         // and the upper limit for k is 52 and for shift 26
-        const int mapped_pos = (k + shift);
+        const int8_t mapped_pos = (k + shift);
         return mapping[mapped_pos] +26 - shift;
     }
 

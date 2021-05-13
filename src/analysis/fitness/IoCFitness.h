@@ -35,7 +35,7 @@ struct IoCFitness {
         int n = text.size();
         float total = 0.0f;
 
-        for (int i = 0; i < 26; ++i) {
+        for (size_t i = 0; i < 26; ++i) {
           int v = histogram[i] + histogram[i + 26] + histogram[i + 52];
           total += (v * (v - 1));
         }

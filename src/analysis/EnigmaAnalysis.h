@@ -9,7 +9,7 @@
 #include <enigma/Enigma.h>
 #include <analysis/ScoredEnigmaKey.h>
 
-int floorMod(const int& a, const int& b)
+int8_t floorMod(const int8_t& a, const int8_t& b)
 {
     return (a % b + b) % b;
 }
@@ -22,13 +22,14 @@ public:
         EIGHT
   };
 
+
   template<int T, class FitnessFunction>
   static std::vector<ScoredEnigmaKey> findRotorConfiguration(
-      std::array<int, T> ciphertext,
+      std::array<int8_t, T> ciphertext,
       AvailableRotors rotors,
       Plugboard plugboard,
       const FitnessFunction& f) {
-    std::vector<int> availableRotorList;
+    std::vector<int8_t> availableRotorList;
 
     switch (rotors) {
       case THREE:
@@ -43,37 +44,44 @@ public:
       break;
     }
 
-    std::vector<ScoredEnigmaKey> keySet ;
-    keySet.reserve(100);
-
-    for (int rotor1 : availableRotorList) {
-      for (int rotor2 : availableRotorList) {
+    std::vector<std::array<int8_t, 3>> rotorComb;
+    for (int8_t rotor1 : availableRotorList) {
+      for (int8_t rotor2 : availableRotorList) {
         if (rotor1 == rotor2)
           continue;
-        for (int rotor3 : availableRotorList) {
+        for (int8_t rotor3 : availableRotorList) {
           if ((rotor1 == rotor3) || (rotor2 == rotor3))
             continue;
-          std::cout << rotor1 << " " << rotor2 << " " << rotor3 << "\n";
-
-          float maxFitness = -1e30f;
-          ScoredEnigmaKey bestKey;
-          for (int i = 0; i < 26; i++) {
-            for (int j = 0; j < 26; j++) {
-              for (int k = 0; k < 26; k++) {
-                Enigma e { { rotor1, rotor2, rotor3 }, 'B', { i, j, k }, { 0, 0, 0 }, plugboard };
-                std::array<int, T> result = e.encrypt(ciphertext);
-                float fitness = f.score(result);
-                if (fitness > bestKey.score) {
-                  bestKey = ScoredEnigmaKey( { rotor1, rotor2, rotor3 }, { i, j, k }, {0,0,0},
-                      plugboard);
-                  bestKey.score = fitness;
-                }
-              }
-            }
-          }
-          keySet.emplace_back(std::move(bestKey));
+          rotorComb.emplace_back(std::array<int8_t, 3>{rotor1, rotor2, rotor3});
         }
       }
+    }
+
+    std::vector<ScoredEnigmaKey> keySet ;
+    keySet.resize(rotorComb.size());
+
+    for(size_t i = 0; i < rotorComb.size(); ++i )
+    {
+      const std::array<int8_t, 3>& rotors = rotorComb[i];
+      std::cout << (int)rotors[0] << " " << (int)rotors[1] << " " << (int)rotors[2] << "\n";
+      Enigma e { rotors, 'B', { 0, 0, 0 }, { 0, 0, 0 }, plugboard };
+      float maxFitness = -1e30f;
+      ScoredEnigmaKey bestKey;
+      for (int8_t i = 0; i < 26; i++) {
+        for (int8_t j = 0; j < 26; j++) {
+          for (int8_t k = 0; k < 26; k++) {
+            e.resetRotorPositions(i,j,k);
+            std::array<int8_t, T> result = e.encrypt(ciphertext);
+            float fitness = f.score(result);
+            if (fitness > bestKey.score) {
+              bestKey = ScoredEnigmaKey( rotors, { i, j, k }, {0,0,0},
+                  plugboard);
+              bestKey.score = fitness;
+            }
+          }
+        }
+      }
+      keySet[i] = std::move(bestKey);
     }
 
     // Sort keys by best performing (highest fitness score)
@@ -89,10 +97,10 @@ public:
       ScoredEnigmaKey key,
       const char* ciphertext,
       FitnessFunction f) {
-    int rightRotorIndex = 2, middleRotorIndex = 1;
+    int8_t rightRotorIndex = 2, middleRotorIndex = 1;
 
     // Optimise right rotor
-    int optimalIndex = findRingSetting(key, ciphertext, rightRotorIndex, f);
+    int8_t optimalIndex = findRingSetting(key, ciphertext, rightRotorIndex, f);
     key.rings[rightRotorIndex] = optimalIndex;
     key.indicators[rightRotorIndex] = (key.indicators[rightRotorIndex] + optimalIndex) % 26;
 
@@ -109,14 +117,14 @@ public:
   }
 
   template<class FitnessFunction>
-  static int findRingSetting(const ScoredEnigmaKey& key, const char* ciphertext, int rotor, FitnessFunction f) {
+  static int8_t findRingSetting(const ScoredEnigmaKey& key, const char* ciphertext, int8_t rotor, FitnessFunction f) {
     auto originalIndicators = key.indicators;
     auto originalRingSettings = key.rings;
 
-    int optimalRingSetting = 0;
+    int8_t optimalRingSetting = 0;
     float maxFitness = -1e30f;
     std::string result;
-    for (int i = 0; i < 26; i++) {
+    for (int8_t i = 0; i < 26; i++) {
       auto currentStartingPositions = originalIndicators;
       auto currentRingSettings = originalRingSettings;
 
@@ -147,12 +155,12 @@ public:
 
     std::string result;
     ScoredEnigmaKey newKey = key;
-    for (int i = 0; i < 26; ++i) {
+    for (int8_t i = 0; i < 26; ++i) {
       // if this character is already plugged.
       if(newKey.plugboard.plugged[i] == true)
         continue;
       // only search further down the plugboard
-      for (int j = i; j < 26; ++j) {
+      for (int8_t j = i; j < 26; ++j) {
         // check if this one is plugged
         if(newKey.plugboard.plugged[j] == true)
                continue;
@@ -180,10 +188,10 @@ public:
 
  template<class FitnessFunction>
  static ScoredEnigmaKey findPlugs(
-     ScoredEnigmaKey key, int maxPlugs,
+     ScoredEnigmaKey key, int8_t maxPlugs,
      const char* ciphertext,
      FitnessFunction f) {
-   for (int i = 0; i < maxPlugs; i++) {
+   for (int8_t i = 0; i < maxPlugs; i++) {
       findPlug(key, ciphertext, f);
    }
 

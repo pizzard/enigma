@@ -18,23 +18,25 @@ class Enigma {
 
 
 public:
-    Enigma(std::array<int, 3> rotors,
+    Enigma(std::array<int8_t, 3> rotors,
         char reflectorId,
-        std::array<int, 3> rotorPositions,
-        std::array<int, 3> ringSettings,
-        Plugboard plugboardConnections)
+        std::array<int8_t, 3> rotorPositions,
+        std::array<int8_t, 3> ringSettings,
+        const Plugboard& plugboardConnections)
          : leftRotor(Rotor::Create(rotors[0], rotorPositions[0], ringSettings[0]))
          , middleRotor(Rotor::Create(rotors[1], rotorPositions[1], ringSettings[1]))
          , rightRotor(Rotor::Create(rotors[2], rotorPositions[2], ringSettings[2]))
          , reflector(Reflector::Create(reflectorId))
-         , plugboard(std::move(plugboardConnections))
+         , plugboard(plugboardConnections)
     {
     }
 
+    constexpr void resetRotorPositions(int8_t a, int8_t b, int8_t c) {
+      leftRotor.resetPosition(a);
+      middleRotor.resetPosition(b);
+      rightRotor.resetPosition(c);
+    }
 
-//    public Enigma(EnigmaKey key) {
-//        this(key.rotors, "B", key.indicators, key.rings, key.plugboard);
-//    }
 
     constexpr void rotate() {
         // If middle rotor notch - double-stepping
@@ -51,24 +53,24 @@ public:
         rightRotor.turnover();
     }
 
-    constexpr int encrypt(int c) {
+    constexpr int8_t encrypt(int8_t c) {
         rotate();
 
         // Plugboard in
         c = plugboard.forward(c);
 
         // Right to left
-        const int c1 = rightRotor.forward(c);
-        const int c2 = middleRotor.forward(c1);
-        const int c3 = leftRotor.forward(c2);
+        const int8_t c1 = rightRotor.forward(c);
+        const int8_t c2 = middleRotor.forward(c1);
+        const int8_t c3 = leftRotor.forward(c2);
 
         // Reflector
-        const int c4 = reflector.forward(c3);
+        const int8_t c4 = reflector.forward(c3);
 
         // Left to right
-        const int c5 = leftRotor.backward(c4);
-        const int c6 = middleRotor.backward(c5);
-        const int c7 = rightRotor.backward(c6);
+        const int8_t c5 = leftRotor.backward(c4);
+        const int8_t c6 = middleRotor.backward(c5);
+        const int8_t c7 = rightRotor.backward(c6);
 
         // Plugboard out
         return plugboard.forward(c7);

@@ -38,10 +38,10 @@ TEST(Enigma, DecryptTest) {
    std::mt19937 gen(176); // random number generator, fixed seed
 
     // Used to generate a random number in specific range [a, b]:
-    std::uniform_int_distribution<int> random_rotor(1, 8); // inclusive range!
+    std::uniform_int_distribution<int8_t> random_rotor(1, 8); // inclusive range!
 
-    std::array<int, 8> allRotors{1,2,3,4,5,6,7,8};
-    std::uniform_int_distribution<int> random_char(0, 25); // inclusive range!
+    std::array<int8_t, 8> allRotors{1,2,3,4,5,6,7,8};
+    std::uniform_int_distribution<int8_t> random_char(0, 25); // inclusive range!
     std::string input;
     input.resize(1000);
     for (int i = 0; i < 1000; i++) {
@@ -50,10 +50,10 @@ TEST(Enigma, DecryptTest) {
 
     for (int test = 0; test < 10; test++) {
       // Random initialisation
-      std::array<int, 3> rotors { random_rotor(gen), random_rotor(gen), random_rotor(gen) };
+      std::array<int8_t, 3> rotors { random_rotor(gen), random_rotor(gen), random_rotor(gen) };
 
-      std::array<int, 3> startingPositions{random_char(gen),random_char(gen),random_char(gen)};
-      std::array<int, 3> ringSettings {random_char(gen), random_char(gen), random_char(gen)};
+      std::array<int8_t, 3> startingPositions{random_char(gen),random_char(gen),random_char(gen)};
+      std::array<int8_t, 3> ringSettings {random_char(gen), random_char(gen), random_char(gen)};
 
       // Machine 1 - Encryption
       Enigma e1{rotors, 'B', startingPositions, ringSettings, {}};

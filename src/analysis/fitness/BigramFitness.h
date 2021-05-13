@@ -19,7 +19,7 @@
         return fitness;
     }
     template<int T>
-    float score(const std::array<int, T>& text) {
+    float score(const std::array<int8_t, T>& text) {
         float fitness = 0;
         int current = 0;
         int next = text[0]%26;

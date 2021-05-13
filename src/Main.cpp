@@ -19,7 +19,7 @@ int main() {
   // For those interested, these were the original settings
   // II V III / 7 4 19 / 12 2 20 / AF TV KO BL RW
   const char* ciphertext = "OZLUDYAKMGMXVFVARPMJIKVWPMBVWMOIDHYPLAYUWGBZFAFAFUQFZQISLEZMYPVBRDDLAGIHIFUJDFADORQOOMIZPYXDCBPWDSSNUSYZTJEWZPWFBWBMIEQXRFASZLOPPZRJKJSPPSTXKPUWYSKNMZZLHJDXJMMMDFODIHUBVCXMNICNYQBNQODFQLOGPZYXRJMTLMRKQAUQJPADHDZPFIKTQBFXAYMVSZPKXIQLOQCVRPKOBZSXIUBAAJBRSNAFDMLLBVSYXISFXQZKQJRIQHOSHVYJXIFUZRMXWJVWHCCYHCXYGRKMKBPWRDBXXRGABQBZRJDVHFPJZUSEBHWAEOGEUQFZEEBDCWNDHIAQDMHKPRVYHQGRDYQIOEOLUBGBSNXWPZCHLDZQBWBEWOCQDBAFGUVHNGCIKXEIZGIZHPJFCTMNNNAUXEVWTWACHOLOLSLTMDRZJZEVKKSSGUUTHVXXODSKTFGRUEIIXVWQYUIPIDBFPGLBYXZTCOQBCAHJYNSGDYLREYBRAKXGKQKWJEKWGAPTHGOMXJDSQKYHMFGOLXBSKVLGNZOAXGVTGXUIVFTGKPJU";
-  std::array<int, 584> msg;
+  std::array<int8_t, 584> msg;
   for(int i = 0; i < msg.size(); ++i)
   {
     msg[i] = charToIndex(ciphertext[i]);
@@ -35,8 +35,8 @@ int main() {
   std::cout << "\nTop 10 rotor configurations: \n";
   for (const ScoredEnigmaKey& key : rotorConfigurations) {
     std::cout <<
-        key.rotors[0] << " " <<  key.rotors[1] << " " <<  key.rotors[2 ] << " / " <<
-        key.indicators[0] << " " << key.indicators[1] << " " << key.indicators[2] << " / " <<
+        (int)key.rotors[0] << " " << (int)key.rotors[1] << " " <<  (int)key.rotors[2 ] << " / " <<
+        (int)key.indicators[0] << " " << (int)key.indicators[1] << " " << (int)key.indicators[2] << " / " <<
         key.score << "\n";
   }
   {
@@ -54,7 +54,7 @@ int main() {
   ScoredEnigmaKey rarConfig = EnigmaAnalysis::findRingSettings(rotorConfigurations[0], ciphertext, bigrams);
 
   std::cout << "Best ring settings:" <<
-      rarConfig.rings[0] << " " << rarConfig.rings[1] << " " << rarConfig.rings[2] << "\n";
+      (int)rarConfig.rings[0] << " " << (int)rarConfig.rings[1] << " " << (int)rarConfig.rings[2] << "\n";
   {
     const ScoredEnigmaKey& key = rarConfig;
     Enigma e(key.rotors,
