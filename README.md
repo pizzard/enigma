@@ -64,6 +64,32 @@ By applying the same trick to the IoC fitness function just having a triple size
 By adjusting the notch check to actually be based on the rotor shift (instead of position), we simplify the check and end up with another reduction to 4046.31ms.
 
 After all these specific operations, rumtine started to spread out between different operations in the program. Also a lot of the lookups in the arrays for the actual character mapping now took 37%. Currently im using 64 bit integers, but hte real value range of all these characters is from -1 to 78, so they will fit in a 8bit-integer. This will make them squeeze into caches better.
-This had a surprisingly small effect of only reducing the runtime to 3823.17ms.
+This had a surprisingly small effect of only reducing the runtime to 3908.49ms.
 
 At this point further optimizations become much less obvious. 
+So I looked at the multithreading optimizations. Including the reset logic form 
+the optimized branch did not actually improve performance at all. 
+Precomputing the rotor combinations does not change performance too, but is the 
+foundation for using C++ parallel STL algorithms. 
+
+I installed Intel TBB to use with gcc9.3 to use the parallel STL.
+A simple for each with parallel exceution policy on my 12 core CPU (6 cores + HT) brings the execution time down 0.7seconds. As this seems to be a heavily computations bound operation, the hyperthreading seems to not accerelate that much.
+
+Realistically the left wheel of the enigma does not rotate that much. So as long the left has not rotated, it is a static mapping. So the forward() translation of the left wheel through the plugboard and the backward translation can be represented by another static plugboard. This needs to be updated whenever the left wheel turns, but this event is rare enough for it to be worth it. 
+This reduced the runtime down to 2919.83ms (single core).
+
+The next realization was that is was using the same encoding arrays for plugboards and reflector as for the roters, but the value range für these was only 0-52 with my current setup. 
+So I splitted them out by using only 52 charcters big landing pads for these. 
+This also led me to realize that in the rotor, instead of adding 26 to the mapped value before subtracting the shift I just could add 26 to the mapped value. 
+This further brought runtime down to 2452.77ms (single core).
+On multicore the runtime drops down to about 430ms. The problem arises here that starting the program, making the outputs and setting up the threadpool takes so long it makes accurate measurements of the time more and more difficult.
+
+As there are currently no more ideas to improve runtime, and with 0.4 seconds further optimization becomes hard, i focuessed on fixing the ring rotor issue. 
+It bothered me that the ring setting did not find the exactly correct solutions.
+It currently runs into a local maximum quite quickly and does not at all attempt to serach for the right rotors. Given that the runtime is currently only a few milliseconds I upgraded it to search for the full combination. 
+By just choosing the starting positions as {0,0,0} and changing the ring settings one can get very close. The problem is still that ther a difficult local maximum to overcome.
+When actually trying each right rotor combination, the local maximums are no longer an issue to the same degree. And using the parallelism and operations from above, it still only needs around 400ms to do that.
+
+The last frontier for me is the plugboard settings. While the performance in handling more plugboard settings is not really an issue. The bigger issue is actually that the plugboard render the fitness function ineffective. The IoC
+still works to some degree, but the bigrams will no longer occur that way, 
+when one of the letters is actually changed.

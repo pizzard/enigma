@@ -16,7 +16,7 @@ TEST(Enigma, IdentityPlugboard) {
 TEST(Enigma, OnePlug) {
   constexpr Plugboard id{{"AB"}};
 
-  Encoding result = makeEncoding("BACDEFGHIJKLMNOPQRSTUVWXYZ");
+  ReflectorEncoding result = makeReflectorEncoding("BACDEFGHIJKLMNOPQRSTUVWXYZ");
 
   for(int i = 0; i < 26; ++i)
   {
@@ -28,7 +28,7 @@ TEST(Enigma, OnePlug) {
 TEST(Enigma, MultiplePlugs) {
   constexpr Plugboard id{{"AB", "CD", "EF", "GH", "IJ"}};
 
-  Encoding result = makeEncoding("BADCFEHGJIKLMNOPQRSTUVWXYZ");
+  ReflectorEncoding result = makeReflectorEncoding("BADCFEHGJIKLMNOPQRSTUVWXYZ");
 
   for(int i = 0; i < 26; ++i)
   {

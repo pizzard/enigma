@@ -26,11 +26,11 @@ int main() {
   }
 
   // Begin by finding the best combination of rotors and start positions (returns top n)
-  std::vector<ScoredEnigmaKey> rotorConfigurations = EnigmaAnalysis::findRotorConfiguration<584>(
+  // the selection of a fitness function was patched out during optimization
+  std::vector<ScoredEnigmaKey> rotorConfigurations = EnigmaAnalysis::findRotorConfiguration<IoCFitnessInterleaved, 584>(
       msg,
       EnigmaAnalysis::AvailableRotors::FIVE,
-      Plugboard{},
-      ioc);
+      Plugboard{});
 
   std::cout << "\nTop 10 rotor configurations: \n";
   for (const ScoredEnigmaKey& key : rotorConfigurations) {
@@ -39,51 +39,67 @@ int main() {
         (int)key.indicators[0] << " " << (int)key.indicators[1] << " " << (int)key.indicators[2] << " / " <<
         key.score << "\n";
   }
-  {
-    const ScoredEnigmaKey& key = rotorConfigurations[0];
-    Enigma e(key.rotors,
-        'B',
-        key.indicators,
-        key.rings,
-        key.plugboard);
-    std::cout << "Current decryption: " <<
-        encryptString(e, ciphertext) << "\n";
-  }
-
-  // Next find the best ring settings for the best configuration (index 0)
-  ScoredEnigmaKey rarConfig = EnigmaAnalysis::findRingSettings(rotorConfigurations[0], ciphertext, bigrams);
-
-  std::cout << "Best ring settings:" <<
-      (int)rarConfig.rings[0] << " " << (int)rarConfig.rings[1] << " " << (int)rarConfig.rings[2] << "\n";
-  {
-    const ScoredEnigmaKey& key = rarConfig;
-    Enigma e(key.rotors,
-        'B',
-        key.indicators,
-        key.rings,
-        key.plugboard);
-    std::cout << "Current decryption:" <<
-      encryptString(e, ciphertext) << "\n";
-  }
-
-  // Finally, perform hill climbing to find plugs one at a time
-  ScoredEnigmaKey optimalKeyWithPlugs = EnigmaAnalysis::findPlugs(rarConfig, 5, ciphertext, kpt);
-  std::cout << "Best plugboard: " << optimalKeyWithPlugs.plugboard.ToString() << "\n";
-  {
-    const ScoredEnigmaKey& key = optimalKeyWithPlugs;
-    Enigma e(key.rotors,
-        'B',
-        key.indicators,
-        key.rings,
-        key.plugboard);
-    std::cout << "Current decryption:" <<
-      encryptString(e, ciphertext) << "\n";
-  }
 
   auto t2 = high_resolution_clock::now();
-  /* Getting number of milliseconds as a double. */
-  std::chrono::duration<double, std::milli> ms_double = t2 - t1;
-  std::cout << "Total execution time " << ms_double.count() << "ms";
 
+  for(int i = 0 ; i < 1 ; ++i)
+  {
+    std::cout << "Current Rotors: "
+             << (int)rotorConfigurations[i].rotors[0] << " "
+             << (int)rotorConfigurations[i].rotors[1] << " "
+             << (int)rotorConfigurations[i].rotors[2 ] << "\n";
+    // Next find the best ring settings for the top 10 configurations
+    ScoredEnigmaKey ringConfig = EnigmaAnalysis::findRingSettings(rotorConfigurations[i], ciphertext, ioc);
+
+    std::cout << "Best ring - startpos difference:" <<
+        (int)ringConfig.rings[0] << " " << (int)ringConfig.rings[1] << " " << (int)ringConfig.rings[2] << "\n";
+    {
+      const ScoredEnigmaKey& key = ringConfig;
+      Enigma e(key.rotors,
+          'B',
+          key.indicators,
+          key.rings,
+          key.plugboard);
+      std::cout << "Current decryption:" <<
+        encryptString(e, ciphertext) << "\n";
+    }
+
+    // Next find the best ring settings for the top 10 configurations
+    ScoredEnigmaKey startConfig = EnigmaAnalysis::findStartingPositions(ringConfig, ciphertext, bigrams);
+
+    std::cout << "Best starting positions settings:" <<
+        (int)startConfig.indicators[0] << " " << (int)startConfig.indicators[1] << " " << (int)startConfig.indicators[2] << "\n";
+    std::cout << "Best ring settings:" <<
+           (int)startConfig.rings[0] << " " << (int)startConfig.rings[1] << " " << (int)startConfig.rings[2] << "\n";
+
+    {
+      const ScoredEnigmaKey& key = startConfig;
+      Enigma e(key.rotors,
+          'B',
+          key.indicators,
+          key.rings,
+          key.plugboard);
+      std::cout << "Current decryption:" <<
+        encryptString(e, ciphertext) << "\n";
+    }
+
+    // Finally, perform hill climbing to find plugs one at a time
+    ScoredEnigmaKey optimalKeyWithPlugs = EnigmaAnalysis::findPlugs(startConfig, 5, ciphertext, kpt);
+    std::cout << "Best plugboard: " << optimalKeyWithPlugs.plugboard.ToString() << "\n";
+    {
+      const ScoredEnigmaKey& key = optimalKeyWithPlugs;
+      Enigma e(key.rotors,
+          'B',
+          key.indicators,
+          key.rings,
+          key.plugboard);
+      std::cout << "Current decryption:" <<
+        encryptString(e, ciphertext) << "\n";
+    }
+  }
+
+  auto t4 = high_resolution_clock::now();
+  std::cout << "RotorConfiguration " << std::chrono::duration<double, std::milli>(t2 - t1).count() << "ms\n";
+  std::cout << "Ring Settings + Plugs " << std::chrono::duration<double, std::milli>(t4 - t2).count() << "ms\n";
   return 0;
 }

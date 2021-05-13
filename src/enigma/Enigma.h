@@ -16,6 +16,8 @@ class Enigma {
     Reflector reflector;
     Plugboard plugboard;
 
+    // as the left rotor nearly never turns, lets cache the rotor -> plugboard -> rotor
+    Reflector leftRotorPlusReflector;
 
 public:
     Enigma(std::array<int8_t, 3> rotors,
@@ -28,13 +30,31 @@ public:
          , rightRotor(Rotor::Create(rotors[2], rotorPositions[2], ringSettings[2]))
          , reflector(Reflector::Create(reflectorId))
          , plugboard(plugboardConnections)
+         , leftRotorPlusReflector(createCombinedReflector())
     {
+    }
+
+    constexpr Reflector createCombinedReflector()
+    {
+      ReflectorEncoding encoding{};
+      for(int8_t i = 0; i < 26; ++i)
+      {
+        const int8_t c3 = leftRotor.forward(identityEncoding[i]);
+        const int8_t c4 = reflector.forward(c3);
+        const int8_t c5 = leftRotor.backward(c4);
+        encoding[i] = c5;
+      }
+      for(int8_t i = 26; i < 26*2; ++i)
+        encoding[i] = encoding[i-26];
+
+      return Reflector{encoding};
     }
 
     constexpr void resetRotorPositions(int8_t a, int8_t b, int8_t c) {
       leftRotor.resetPosition(a);
       middleRotor.resetPosition(b);
       rightRotor.resetPosition(c);
+      leftRotorPlusReflector = createCombinedReflector();
     }
 
 
@@ -43,6 +63,7 @@ public:
         if (middleRotor.isAtNotch()) {
             middleRotor.turnover();
             leftRotor.turnover();
+            leftRotorPlusReflector = createCombinedReflector();
         }
         // If left-rotor notch
         else if (rightRotor.isAtNotch()) {
@@ -62,13 +83,7 @@ public:
         // Right to left
         const int8_t c1 = rightRotor.forward(c);
         const int8_t c2 = middleRotor.forward(c1);
-        const int8_t c3 = leftRotor.forward(c2);
-
-        // Reflector
-        const int8_t c4 = reflector.forward(c3);
-
-        // Left to right
-        const int8_t c5 = leftRotor.backward(c4);
+        const int8_t c5 = leftRotorPlusReflector.forward(c2);
         const int8_t c6 = middleRotor.backward(c5);
         const int8_t c7 = rightRotor.backward(c6);
 
@@ -76,15 +91,6 @@ public:
         return plugboard.forward(c7);
     }
 
-    // encrypts already converted integer sequences
-    template<class T>
-    constexpr T encrypt(const T& input) {
-        T out{};
-        for (int i = 0; i <out.size(); i++) {
-          out[i] = encrypt(input[i]);
-        }
-        return out;
-    }
 };
 
 

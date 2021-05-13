@@ -5,7 +5,7 @@
 TEST(Enigma, Reflector) {
   constexpr Reflector id = Reflector::Create('A');
 
-  constexpr Encoding result = makeEncoding("ZYXWVUTSRQPONMLKJIHGFEDCBA");
+  constexpr ReflectorEncoding result = makeReflectorEncoding("ZYXWVUTSRQPONMLKJIHGFEDCBA");
 
   for(int i = 0; i < 26; ++i)
   {
