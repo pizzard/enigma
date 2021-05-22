@@ -2,7 +2,7 @@
 #define ENIGMA_PLUGBOARD_H
 
 #include <enigma/Reflector.h>
-
+#include <random>
 
 class Plugboard {
 
@@ -23,6 +23,38 @@ public:
         int8_t second = charToIndex(plug[1]);
         addPlug(first, second);
       }
+    }
+    template<class Generator>
+    Plugboard(int num_plugs, Generator& gen)
+      : has_plugs(true)
+    {
+      std::uniform_int_distribution<int8_t> random_plug_gen(0, 25); // inclusive range!
+      // now we have a massively invalid setup which we need to fix up.
+      int plugs = 0;
+      while(plugs < num_plugs)
+      {
+        //find a random plug to use
+        int8_t random_plug = random_plug_gen(gen);
+        // that one is already chosen and fixed, so take the next one.
+        while(plugged[random_plug])
+        {
+          random_plug = (++random_plug)%26;
+        }
+        int8_t target =  random_plug_gen(gen);
+        while(plugged[target] || target == random_plug)
+        {
+          target = (++target)%26;
+        }
+        plugged[random_plug] = true;
+        plugged[target] = true;
+        // create symmetry
+        wiring[target] = random_plug;
+        wiring[random_plug] = target;
+        plugs++;
+      }
+      for(int8_t i = 26; i < 26*2; ++i)
+        wiring[i] = wiring[i-26];
+
     }
 
     constexpr Plugboard(const ReflectorEncoding& e): wiring(e){}

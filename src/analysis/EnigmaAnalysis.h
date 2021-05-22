@@ -12,10 +12,6 @@
 #include <analysis/ScoredEnigmaKey.h>
 #include <analysis/fitness/IoCFitness.h>
 
-int8_t floorMod(const int8_t& a, const int8_t& b)
-{
-    return (a % b + b) % b;
-}
 
 class EnigmaAnalysis {
 public:
@@ -25,11 +21,12 @@ public:
         EIGHT
   };
 
-  template <class FitnessFunction, int T>
+  template <int T, class FitnessFunction>
   static std::vector<ScoredEnigmaKey> findRotorConfiguration(
       std::array<int8_t, T> ciphertext,
       AvailableRotors rotors,
-      Plugboard plugboard) {
+      Plugboard plugboard,
+      FitnessFunction f) {
     std::vector<int8_t> availableRotorList;
 
     switch (rotors) {
@@ -62,24 +59,21 @@ public:
     std::vector<ScoredEnigmaKey> keySet ;
     keySet.resize(rotorComb.size());
 
-    std::for_each(std::execution::seq, rotorComb.cbegin(), rotorComb.cend(), [&] (const auto& comb)
+    std::for_each(std::execution::par_unseq, rotorComb.cbegin(), rotorComb.cend(), [&] (const auto& comb)
     {
-      const std::array<int8_t, 3>& rotors = comb.second;
-      Enigma e { rotors, 'B', { 0, 0, 0 }, { 0, 0, 0 }, plugboard };
       float maxFitness = -1e30f;
       ScoredEnigmaKey bestKey;
+      const std::array<int8_t, 3>& rotors = comb.second;
+      Enigma e { rotors, 'B', { 0, 0, 0}, { 12,2,20 }, Plugboard{} };
       for (int8_t i = 0; i < 26; i += 1) {
         for (int8_t j = 0; j < 26; j++) {
           for (int8_t k = 0; k < 26; k += 1) {
             e.resetRotorPositions(i,j,k);
-            FitnessFunction f;
-            for (int i = 0; i <ciphertext.size(); i++) {
-              f.score(e.encrypt(ciphertext[i]));
-             }
-            float fitness = f.sumScores(ciphertext.size());
+            std::array<int8_t, T> result = e.encrypt(ciphertext);
+            float fitness = f.score(result);
             if (fitness > bestKey.score) {
               bestKey = ScoredEnigmaKey( rotors, { i, j, k }, {0,0,0},
-                  plugboard);
+                  Plugboard{});
               bestKey.score = fitness;
             }
           }
@@ -121,7 +115,7 @@ public:
     std::array<std::pair<std::array<int8_t, 3>, float>, 26> optimalRingsResults{};
     std::array<int8_t, 26> ints{};
     std::iota(ints.begin(), ints.end(), 0);
-    std::for_each(std::execution::seq, ints.cbegin(), ints.cend(), [&] (const auto& i)
+    std::for_each(std::execution::par_unseq, ints.cbegin(), ints.cend(), [&] (const auto& i)
     {
       float maxFitness = -1e30f;
       std::array<int8_t, 3> optimalRings{};
@@ -140,7 +134,7 @@ public:
             if (fitness > maxFitness) {
               maxFitness = fitness;
               optimalRings = currentRings;
-              optimalRings[2] -= l;
+              optimalRings[2] = (optimalRings[2] + 26 -l)%26;
             }
           }
         }

@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 #include <enigma/Plugboard.h>
 
-// rotor mapping to self succesfully
+#include <random>
+
 TEST(Enigma, IdentityPlugboard) {
   constexpr Plugboard id{};
 
@@ -12,7 +13,6 @@ TEST(Enigma, IdentityPlugboard) {
 
 }
 
-// rotor mapping to self succesfully
 TEST(Enigma, OnePlug) {
   constexpr Plugboard id{{"AB"}};
 
@@ -24,7 +24,6 @@ TEST(Enigma, OnePlug) {
   }
 
 }
-// rotor mapping to self succesfully
 TEST(Enigma, MultiplePlugs) {
   constexpr Plugboard id{{"AB", "CD", "EF", "GH", "IJ"}};
 
@@ -36,4 +35,13 @@ TEST(Enigma, MultiplePlugs) {
   }
 
   EXPECT_EQ(id.ToString(), "AB CD EF GH IJ ");
+}
+
+// rotor mapping to self succesfully
+TEST(Enigma, RandomPlugboard) {
+
+  std::mt19937 gen(54673765765); // random number generator, fixed seed
+  Plugboard id{10, gen};
+  EXPECT_EQ(id.ToString(), "AF BU CK DP HZ JQ LT MO NW RS ");
+
 }

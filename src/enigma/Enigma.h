@@ -91,6 +91,15 @@ public:
         return plugboard.forward(c7);
     }
 
+    template <size_t sz>
+    constexpr std::array<int8_t, sz> encrypt(const std::array<int8_t, sz>& input)
+    {
+      std::array<int8_t, sz> out{};
+      for(int i = 0; i < sz; i++)
+        out[i] = encrypt(input[i]);
+      return out;
+    }
+
 };
 
 

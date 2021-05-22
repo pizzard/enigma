@@ -26,7 +26,7 @@ struct IoCFitness {
 
     template<class T>
     float score(const T& text) const {
-        std::array<int, 26+26+26> histogram{0};
+        std::array<int, 26+26> histogram{0};
 
         for (int c : text) {
             histogram[c]++;
@@ -36,7 +36,7 @@ struct IoCFitness {
         float total = 0.0f;
 
         for (size_t i = 0; i < 26; ++i) {
-          int v = histogram[i] + histogram[i + 26] + histogram[i + 52];
+          int v = histogram[i] + histogram[i + 26];
           total += (v * (v - 1));
         }
 
@@ -44,26 +44,5 @@ struct IoCFitness {
     }
 };
 
-
-struct IoCFitnessInterleaved {
-
-    constexpr void score(int8_t c){
-      histogram[c]++;
-    }
-
-    constexpr float sumScores(int text_size) const
-    {
-      float total = 0.0f;
-      for (size_t i = 0; i < 26; ++i) {
-        int v = histogram[i] + histogram[i + 26] + histogram[i + 52];
-        total += (v * (v - 1));
-      }
-      return total / (text_size * (text_size-1));
-    }
-
-
-    std::array<int, 26+26+26> histogram{0};
-
-};
 
 #endif

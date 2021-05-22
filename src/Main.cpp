@@ -27,10 +27,11 @@ int main() {
 
   // Begin by finding the best combination of rotors and start positions (returns top n)
   // the selection of a fitness function was patched out during optimization
-  std::vector<ScoredEnigmaKey> rotorConfigurations = EnigmaAnalysis::findRotorConfiguration<IoCFitnessInterleaved, 584>(
+  std::vector<ScoredEnigmaKey> rotorConfigurations = EnigmaAnalysis::findRotorConfiguration<584>(
       msg,
       EnigmaAnalysis::AvailableRotors::FIVE,
-      Plugboard{});
+      Plugboard{},
+      ioc);
 
   std::cout << "\nTop 10 rotor configurations: \n";
   for (const ScoredEnigmaKey& key : rotorConfigurations) {
