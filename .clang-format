@@ -1,0 +1,119 @@
+# Do not indent access modifiers, e.g. public
+AccessModifierOffset: -4
+
+# Alignments
+## Don’t align after open bracket, instead use ContinuationIndentWidth
+AlignAfterOpenBracket: DontAlign
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignEscapedNewlines: Left
+AlignOperands: true
+AlignTrailingComments: true
+
+# Allow
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+# Force break
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: true
+
+# Do not bin pack
+BinPackArguments: false
+BinPackParameters: false
+
+# Breaks
+## BraceWrapping -> Customize BreakBeforeBraces
+BraceWrapping:
+  AfterClass:				true
+  AfterControlStatement:	true
+  AfterEnum:				true
+  AfterFunction:			true
+  AfterNamespace:			true
+  AfterObjCDeclaration:		true
+  AfterStruct:				true
+  AfterUnion:				true
+  AfterExternBlock:			false
+  BeforeCatch:				true
+  BeforeElse:				true
+  IndentBraces:				false
+  SplitEmptyFunction:		false
+  SplitEmptyRecord:			false
+  SplitEmptyNamespace:		false
+
+BreakBeforeBinaryOperators: NonAssignment
+
+## Customize based on Allman
+BreakBeforeBraces: Custom
+
+## Break if class uses multiple inheritance
+BreakBeforeInheritanceComma: true
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeComma
+BreakStringLiterals: false
+
+ColumnLimit: 100
+CommentPragmas: ''
+CompactNamespaces: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 8
+Cpp11BracedListStyle: true
+DerivePointerAlignment: false
+DisableFormat: false
+ExperimentalAutoDetectBinPacking: true
+FixNamespaceComments: true
+ForEachMacros: ['BOOST_FOREACH', 'BOOST_REVERSE_FOREACH', 'FOREACH', 'foreach', 'Q_FOREACH']
+
+## Sort includes by priority (lowest priority first) using the following regex
+IncludeBlocks: Preserve
+
+IndentCaseLabels: false
+IndentPPDirectives: AfterHash
+IndentWidth: 4
+IndentWrappedFunctionNames: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+Language: Cpp
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: None
+
+## ObjC
+ObjCBlockIndentWidth: 4
+ObjCSpaceAfterProperty: true
+ObjCSpaceBeforeProtocolList: true
+
+## Penalties when exceeding ColumnLimit
+PenaltyBreakAssignment: 20
+PenaltyBreakBeforeFirstCallParameter: 0
+PenaltyBreakComment: 100
+PenaltyBreakFirstLessLess: 20
+PenaltyBreakString: 100
+PenaltyExcessCharacter: 1
+PenaltyReturnTypeOnItsOwnLine: 40
+
+PointerAlignment: Left
+ReflowComments: true
+SortIncludes: true
+SortUsingDeclarations: true
+
+## Spaces
+SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: false #needed for operator< with generics
+SpacesInCStyleCastParentheses: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+Standard: Auto
+TabWidth: 4
+UseTab: Always
