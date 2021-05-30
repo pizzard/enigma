@@ -11,6 +11,7 @@
 #include <analysis/ScoredEnigmaKey.h>
 #include <analysis/fitness/IoCFitness.h>
 #include <enigma/Enigma.h>
+#include <enigma/EnigmaUnrolled.h>
 
 class EnigmaAnalysis
 {
@@ -64,28 +65,13 @@ public:
 		std::vector<ScoredEnigmaKey> keySet;
 		keySet.resize(rotorComb.size());
 
-		std::for_each(std::execution::par_unseq, rotorComb.cbegin(), rotorComb.cend(), [&](const auto& comb) {
+		std::for_each(std::execution::seq, rotorComb.cbegin(), rotorComb.cend(), [&](const auto& comb) {
 			float maxFitness = -1e30f;
-			ScoredEnigmaKey bestKey;
+
 			const std::array<int8_t, 3>& rotors = comb.second;
-			Enigma e{rotors, 'B', {0, 0, 0}, {12, 2, 20}, Plugboard{}};
-			for (int8_t i = 0; i < 26; i += 1)
-			{
-				for (int8_t j = 0; j < 26; j++)
-				{
-					for (int8_t k = 0; k < 26; k += 1)
-					{
-						e.resetRotorPositions(i, j, k);
-						std::array<int8_t, T> result = e.encrypt(ciphertext);
-						float fitness = f.score(result);
-						if (fitness > bestKey.score)
-						{
-							bestKey = ScoredEnigmaKey(rotors, {i, j, k}, {0, 0, 0}, Plugboard{});
-							bestKey.score = fitness;
-						}
-					}
-				}
-			}
+			EnigmaUnrolled e{rotors, 'B', {0, 0, 0}, {0,0,0}, Plugboard{}};
+			ScoredEnigmaKey bestKey = e.tryAllPositions<T>(ciphertext, f);
+			bestKey.rotors = rotors;
 			keySet[comb.first] = std::move(bestKey);
 		});
 

@@ -56,7 +56,7 @@ private:
 	}
 };
 
-class Rotor
+struct Rotor
 {
 	const RotorMapping& mapping;
 	int8_t notchPosition;
@@ -66,7 +66,6 @@ class Rotor
 	bool hasSecondaryNotch;
 	int8_t adjustedSecondaryNotchPosition;
 
-public:
 	constexpr Rotor(const RotorMapping& mapping, int8_t rotorPosition, int8_t notchPosition, bool hasSecondaryNotch, int8_t ringSetting)
 		: mapping(mapping)
 		, notchPosition(notchPosition)
@@ -111,14 +110,26 @@ public:
 
 	constexpr int8_t getName() const { return mapping.rotorNum; }
 
-	constexpr int8_t forward(int8_t c) const { return encipher(c, mapping.forwardWiring); }
+	constexpr int8_t forward(int8_t c) const { return encipher(c, mapping.forwardWiring, currentRotorShift); }
 
-	constexpr int8_t backward(int8_t c) const { return encipher(c, mapping.backwardWiring); }
+	constexpr int8_t backward(int8_t c) const { return encipher(c, mapping.backwardWiring, currentRotorShift); }
 
 	constexpr bool isAtNotch()
 	{
 		return adjustedNotchPosition == currentRotorShift
 			   || (hasSecondaryNotch && adjustedSecondaryNotchPosition == currentRotorShift);
+	}
+
+	constexpr bool isOneAfterNotch()
+	{
+		return adjustedNotchPosition+1 == currentRotorShift
+			   || (hasSecondaryNotch && adjustedSecondaryNotchPosition+1 == currentRotorShift );
+	}
+
+	constexpr bool isANotchPosition(int8_t shift) const
+	{
+		return adjustedNotchPosition == shift
+			   || (hasSecondaryNotch && adjustedSecondaryNotchPosition == shift);
 	}
 
 	constexpr void turnover()
@@ -127,13 +138,13 @@ public:
 			currentRotorShift = 0;
 	}
 
-	constexpr void resetPosition(int pos) { currentRotorShift = (pos + 26 - ringSetting) % 26; }
-
-private:
-	// return value can go up to 52 to avoid modulo operations
-	constexpr int8_t encipher(int8_t k, const Encoding& mapping) const
+	constexpr void resetStartingPosition(int8_t rotorPosition)
 	{
-		const int8_t shift = currentRotorShift;
+		currentRotorShift = ((rotorPosition + 26 - ringSetting) % 26);
+	}
+	// return value can go up to 52 to avoid modulo operations
+	constexpr int8_t encipher(int8_t k, const Encoding& mapping, const int8_t shift) const
+	{
 		// as we have a 78 character wide landing pad
 		// and the upper limit for k is 52 and for shift 26
 		const int8_t mapped_pos = (k + shift);

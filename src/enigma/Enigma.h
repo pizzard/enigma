@@ -4,6 +4,7 @@
 #include <enigma/Plugboard.h>
 #include <enigma/Reflector.h>
 #include <enigma/Rotor.h>
+#include <iostream>
 
 #include <cstring>
 
@@ -50,14 +51,6 @@ public:
 		return Reflector{encoding};
 	}
 
-	constexpr void resetRotorPositions(int8_t a, int8_t b, int8_t c)
-	{
-		leftRotor.resetPosition(a);
-		middleRotor.resetPosition(b);
-		rightRotor.resetPosition(c);
-		leftRotorPlusReflector = createCombinedReflector();
-	}
-
 	constexpr void rotate()
 	{
 		// If middle rotor notch - double-stepping
@@ -77,7 +70,7 @@ public:
 		rightRotor.turnover();
 	}
 
-	constexpr int8_t encrypt(int8_t c)
+	int8_t encrypt(int8_t c)
 	{
 		rotate();
 
@@ -96,12 +89,11 @@ public:
 	}
 
 	template<size_t sz>
-	constexpr std::array<int8_t, sz> encrypt(const std::array<int8_t, sz>& input)
+	constexpr std::array<int8_t, sz> encrypt(std::array<int8_t, sz> input)
 	{
-		std::array<int8_t, sz> out{};
 		for (int i = 0; i < sz; i++)
-			out[i] = encrypt(input[i]);
-		return out;
+			input[i] = encrypt(input[i]);
+		return input;
 	}
 };
 

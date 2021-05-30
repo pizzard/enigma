@@ -58,6 +58,15 @@ public:
 	constexpr Plugboard(const ReflectorEncoding& e) : wiring(e) {}
 	constexpr int8_t forward(int8_t c) const { return has_plugs ? wiring[c] : c; }
 
+	template<class Iter>
+	constexpr void forward(Iter begin, Iter end)
+	{
+		if(!has_plugs)
+			return;
+		for (Iter it = begin; it != end; ++it)
+			*it = wiring[*it];
+	}
+
 	constexpr void addPlug(int8_t first, int8_t second)
 	{
 		wiring[first] = second;

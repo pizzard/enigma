@@ -41,7 +41,7 @@ int main()
 
 	auto t2 = high_resolution_clock::now();
 
-	for (int i = 0; i < 1; ++i)
+	for (int i = 0; i < 0; ++i)
 	{
 		std::cout << "Current Rotors: " << (int)rotorConfigurations[i].rotors[0] << " "
 				  << (int)rotorConfigurations[i].rotors[1] << " "

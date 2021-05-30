@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 // rotor mapping to self succesfully
-TEST(Enigma, Reflector)
+TEST(EnigmaReflector, Reflector)
 {
 	constexpr Reflector id = Reflector::Create('A');
 

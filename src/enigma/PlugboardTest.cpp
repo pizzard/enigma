@@ -3,7 +3,7 @@
 
 #include <random>
 
-TEST(Enigma, IdentityPlugboard)
+TEST(EnigmaPlugboard, IdentityPlugboard)
 {
 	constexpr Plugboard id{};
 
@@ -13,7 +13,7 @@ TEST(Enigma, IdentityPlugboard)
 	}
 }
 
-TEST(Enigma, OnePlug)
+TEST(EnigmaPlugboard, OnePlug)
 {
 	constexpr Plugboard id{{"AB"}};
 
@@ -24,7 +24,7 @@ TEST(Enigma, OnePlug)
 		EXPECT_EQ(result[i], id.forward(identityEncoding[i]));
 	}
 }
-TEST(Enigma, MultiplePlugs)
+TEST(EnigmaPlugboard, MultiplePlugs)
 {
 	constexpr Plugboard id{{"AB", "CD", "EF", "GH", "IJ"}};
 
@@ -39,7 +39,7 @@ TEST(Enigma, MultiplePlugs)
 }
 
 // rotor mapping to self succesfully
-TEST(Enigma, RandomPlugboard)
+TEST(EnigmaPlugboard, RandomPlugboard)
 {
 	std::mt19937 gen(54673765765); // random number generator, fixed seed
 	Plugboard id{10, gen};
