@@ -151,3 +151,11 @@ This changes the situation to when only 5 out of 10 need to be correct:
 ```
 which is equal to 1/15096510. So "only" 15 million combinations need to be checked on average until a suitable setting is found. 5 is right on the edge where the IoC is still usable, 6 correct would be better, but is much less likely.
 I wrote an efficient generator for random plugboard settings and it can generate plugboard settings without adding significant runtime. Still, this would take on average 6038604 seconds to complete, which is 1670 hours. This is beyond the limits of my patience, the actual crib-based search the code-crackers in Bletchley park used is much more efficient here.
+
+## Outlook 
+
+This is still not the end. While this is the fastest one my be able to go by keeping the current abstractions, there is still significant time to gain. 
+That this workflow is computation-bound the way it currently is made me think about it in terms of another very computation-heavy workflow, linear algebra and math. 
+Techniques there like loop unrolling, SIMD and pipeline utilization analysis  (instruction-level parallelism) are standard methods in the linear algebra world. So having 5 loops with simple operations after each other can be much faster than having the one loop with 5 operations, if it reduces the data dependencies between the operations.
+
+As this will break abstractions, and be less general, this is forked off to the branch invert_logic.
