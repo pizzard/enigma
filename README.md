@@ -151,3 +151,76 @@ This changes the situation to when only 5 out of 10 need to be correct:
 ```
 which is equal to 1/15096510. So "only" 15 million combinations need to be checked on average until a suitable setting is found. 5 is right on the edge where the IoC is still usable, 6 correct would be better, but is much less likely.
 I wrote an efficient generator for random plugboard settings and it can generate plugboard settings without adding significant runtime. Still, this would take on average 6038604 seconds to complete, which is 1670 hours. This is beyond the limits of my patience, the actual crib-based search the code-crackers in Bletchley park used is much more efficient here.
+
+## Outlook 
+
+This is still not the end. While this is the fastest one my be able to go by keeping the current abstractions, there is still significant time to gain. 
+That this workflow is computation-bound the way it currently is made me think about in terms of another very compuation-heavy workflow, linear algebra and math. 
+Techniques there like loop unrolling, SIMD and pipeline utilization analysis are stardard mathods in the linear algebra world. Also it usualy much faster to a simple operations in a look than having a complex loops. So having 5 loops with simple operations after each another can be much faster than having the one loop with 5 operations, if it reduces the data dependencies between the operations.
+
+As this will break abstractions, and be less general, this is forked off to the branch invert_logic.
+
+## Dismantling the Enigma Machine
+
+On important finding is in this field, that it is often useful to shave off one level of abstraction, as usualy the highest level of abstraction used incurs the biggest overhead. The easiest way this can be done here is by breaking the abstraction of the enigma machine, looking at the problem from the lowest abstraction upwards and then finding new abstractions suitable for this optimization. The interesting observation here is that we currently set up an Engima machine completely and operate it normally (like the original machine would, character by character) but this machine does things we do not actually need. The bombe machines did also not contain complete enigma machines, because not all properties of the machine are essential to the cracking. What bombe did contain was the rotors, as they were an essential building block. So if the remove the abstraction of the Enigma machine and formulate our problem directly in term of the rotors in pseudocode, it looks roughly like this: 
+```
+for each possible rotor configuration in parallel: 
+{
+	for each right rotor starting position:
+	{
+		for each middle rotor starting position:
+		{
+			for each left rotor starting position:
+			{
+				Set up right rotor shift
+				Set up middle rotor shift
+				Set up left rotor shift and mapping rotor-reflector-mapping
+				for each character in the input sequence:
+				{
+					compute rotor turnover
+					apply plugboard
+					apply right rotor forwards
+					apply middle rotor forwards
+					apply combined reflector and left rotor bidirectional mapping
+					apply middle rotor backwards
+					apply middle rotor backwards
+					apply plugboard
+					
+				}
+			}
+		}
+	}
+}
+```
+One can apply each step of the transformation independently (first apply the step of all rotors to each character) we need to track the rotor turns in each step, adding overhead, but we decople the operations.
+```
+for each possible rotor configuration in parallel: 
+{
+	for each right rotor starting position:
+	{
+		for each middle rotor starting position:
+		{
+			for each left rotor starting position:
+			{
+				Set up right rotor shift
+				Set up middle rotor shift
+				Set up left rotor shift and mapping rotor-reflector-mapping
+				for each character in the input sequence:
+				{
+					compute rotor turnover
+					apply plugboard
+					apply right rotor forwards
+					apply middle rotor forwards
+					apply combined reflector and left rotor bidirectional mapping
+					apply middle rotor backwards
+					apply middle rotor backwards
+					apply plugboard
+					
+				}
+			}
+		}
+	}
+}
+```
+As this will lead to much less genereal, much more specialized code I will continue this work on a different branch and close this here.
+
