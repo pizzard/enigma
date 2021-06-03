@@ -114,16 +114,18 @@ struct Rotor
 
 	constexpr int8_t backward(int8_t c) const { return encipher(c, mapping.backwardWiring, currentRotorShift); }
 
-	constexpr bool isAtNotch()
+	constexpr bool isAtNotch() const
 	{
 		return adjustedNotchPosition == currentRotorShift
 			   || (hasSecondaryNotch && adjustedSecondaryNotchPosition == currentRotorShift);
 	}
 
-	constexpr bool isOneAfterNotch()
+	constexpr bool isOneAfterNotch(int8_t shift) const
 	{
-		return adjustedNotchPosition+1 == currentRotorShift
-			   || (hasSecondaryNotch && adjustedSecondaryNotchPosition+1 == currentRotorShift );
+		return adjustedNotchPosition+1 == shift
+				|| adjustedNotchPosition-25 == shift
+				|| (hasSecondaryNotch && (adjustedSecondaryNotchPosition+1 == shift
+					   || adjustedSecondaryNotchPosition-25 == shift));
 	}
 
 	constexpr bool isANotchPosition(int8_t shift) const

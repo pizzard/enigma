@@ -152,11 +152,12 @@ This changes the situation to when only 5 out of 10 need to be correct:
 which is equal to 1/15096510. So "only" 15 million combinations need to be checked on average until a suitable setting is found. 5 is right on the edge where the IoC is still usable, 6 correct would be better, but is much less likely.
 I wrote an efficient generator for random plugboard settings and it can generate plugboard settings without adding significant runtime. Still, this would take on average 6038604 seconds to complete, which is 1670 hours. This is beyond the limits of my patience, the actual crib-based search the code-crackers in Bletchley park used is much more efficient here.
 
+
 ## Outlook 
 
 This is still not the end. While this is the fastest one my be able to go by keeping the current abstractions, there is still significant time to gain. 
-That this workflow is computation-bound the way it currently is made me think about in terms of another very compuation-heavy workflow, linear algebra and math. 
-Techniques there like loop unrolling, SIMD and pipeline utilization analysis are stardard mathods in the linear algebra world. Also it usualy much faster to a simple operations in a look than having a complex loops. So having 5 loops with simple operations after each another can be much faster than having the one loop with 5 operations, if it reduces the data dependencies between the operations.
+That this workflow is computation-bound the way it currently is made me think about it in terms of another very computation-heavy workflow, linear algebra and math. 
+Techniques there like loop unrolling, SIMD and pipeline utilization analysis  (instruction-level parallelism) are standard methods in the linear algebra world. So having 5 loops with simple operations after each other can be much faster than having the one loop with 5 operations, if it reduces the data dependencies between the operations.
 
 As this will break abstractions, and be less general, this is forked off to the branch invert_logic.
 
@@ -164,7 +165,7 @@ As this will break abstractions, and be less general, this is forked off to the 
 
 On important finding is in this field, that it is often useful to shave off one level of abstraction, as usualy the highest level of abstraction used incurs the biggest overhead. The easiest way this can be done here is by breaking the abstraction of the enigma machine, looking at the problem from the lowest abstraction upwards and then finding new abstractions suitable for this optimization. The interesting observation here is that we currently set up an Engima machine completely and operate it normally (like the original machine would, character by character) but this machine does things we do not actually need. The bombe machines did also not contain complete enigma machines, because not all properties of the machine are essential to the cracking. What bombe did contain was the rotors, as they were an essential building block. So if the remove the abstraction of the Enigma machine and formulate our problem directly in term of the rotors in pseudocode, it looks roughly like this: 
 ```
-for each possible rotor configuration in parallel: 
+for each possible rotor selection in parallel: 
 {
 	for each right rotor starting position:
 	{
@@ -177,15 +178,20 @@ for each possible rotor configuration in parallel:
 				Set up left rotor shift and mapping rotor-reflector-mapping
 				for each character in the input sequence:
 				{
-					compute rotor turnover
+					compute right rotor motion
+					compute middle rotor motion
+					compute left rotor motion
 					apply plugboard
 					apply right rotor forwards
 					apply middle rotor forwards
 					apply combined reflector and left rotor bidirectional mapping
 					apply middle rotor backwards
-					apply middle rotor backwards
+					apply right rotor backwards
 					apply plugboard
-					
+				}
+				for each character in the input sequence:
+				{
+					compute score
 				}
 			}
 		}
@@ -194,7 +200,7 @@ for each possible rotor configuration in parallel:
 ```
 One can apply each step of the transformation independently (first apply the step of all rotors to each character) we need to track the rotor turns in each step, adding overhead, but we decople the operations.
 ```
-for each possible rotor configuration in parallel: 
+for each possible rotor selection in parallel: 
 {
 	for each right rotor starting position:
 	{
@@ -207,20 +213,188 @@ for each possible rotor configuration in parallel:
 				Set up left rotor shift and mapping rotor-reflector-mapping
 				for each character in the input sequence:
 				{
-					compute rotor turnover
 					apply plugboard
+				}
+				for each character in the input sequence:
+				{
+					compute right rotor motion
 					apply right rotor forwards
-					apply middle rotor forwards
-					apply combined reflector and left rotor bidirectional mapping
-					apply middle rotor backwards
-					apply middle rotor backwards
-					apply plugboard
 					
+				}				
+				for each character in the input sequence:
+				{
+					compute right rotor motion
+					compute middle rotor motion
+					apply middle rotor forwards
+					
+				}
+				for each character in the input sequence:
+				{
+					compute right rotor motion
+					compute middle rotor motion
+					compute left rotor motion
+					apply combined reflector and left rotor bidirectional mapping
+
+					
+				}
+				for each character in the input sequence:
+				{
+					compute right rotor motion
+					compute middle rotor motion
+					apply middle rotor backwards
+					
+				}
+				for each character in the input sequence:
+				{
+					compute right rotor motion
+					apply right rotor backwards
+					
+				}
+				for each character in the input sequence:
+				{
+					apply plugboard
+				}
+				for each character in the input sequence:
+				{
+					compute score
 				}
 			}
 		}
 	}
 }
 ```
-As this will lead to much less genereal, much more specialized code I will continue this work on a different branch and close this here.
+Motion-computation of rotors which are not actually used in this loop are already omitted. This first transformation shows on one hand why the current approach had its benefits: There is alot more compuation of enigmae rotors. This is not cheap, so the runtime in this first step roughly doubled. But it also shows, that there are quite some of the computation in these loops do not actually depend on the loop variable. So lets pull everything out of the loops thats we can:
+```
+for each character in the input sequence:
+{
+	apply plugboard
+}
+for each possible rotor selection in parallel: 
+{
+	for each right rotor starting position:
+	{
+		Set up right rotor shift
+		for each character in the input sequence:
+		{
+			compute right rotor motion
+			apply right rotor forwards
+			
+		}	
+		for each middle rotor starting position:
+		{
+			Set up middle rotor shift
+			for each character in the input sequence:
+			{
+				compute right rotor motion
+				compute middle rotor motion
+				apply middle rotor forwards
+				
+			}
+			for each left rotor starting position:
+			{
+				Set up left rotor shift and mapping rotor-reflector-mapping
+				for each character in the input sequence:
+				{
+					compute right rotor motion
+					compute middle rotor motion
+					compute left rotor motion
+					apply combined reflector and left rotor bidirectional mapping
+				}
+				for each character in the input sequence:
+				{
+					compute right rotor motion
+					compute middle rotor motion
+					apply middle rotor backwards
+					
+				}
+				for each character in the input sequence:
+				{
+					compute right rotor motion
+					apply right rotor backwards
+					
+				}
+				for each character in the input sequence:
+				{
+					apply plugboard
+				}
+				for each character in the input sequence:
+				{
+					compute score
+				}
+			}
+		}
+	}
+}
+```
+This reduces the number of operations of the whole setup very heavily. 
+In my implementation, this change of operations ended up taking around 2500ms, being as quick as the other setup. So before we had about 9 "operations" in the inner loop (ignoring plugboard mappings as an operations, as we don't have any plugs here). Now its 10 operations, with some extra work every 26th and every 384th cycle, but the right rotor motion is quite simple to compute. So at first glance, this change has not actually helped much.
+
+## Rotor motion
+
+As it is the dominating operation now, lets look at rotor motion. 
+The upshot is, that rotor motion does not actually depend on the character sequence. The rotor position (and applied shift in character mapping) is dependent on the enigma starting paramters only. Also the rotor position does not depend on the direction of the transformation. So there is the possibility to record and store the rotor motions in the forward motion and reuse them when going backwards, a setup looking roughly like this: 
+```
+for each character in the input sequence:
+{
+	apply plugboard
+}
+for each possible rotor selection in parallel: 
+{
+	for each right rotor starting position:
+	{
+		Set up right rotor shift
+		for each character in the input sequence:
+		{
+			compute right rotor motion
+			store right rotor motion
+			apply right rotor forwards
+		}
+		for each middle rotor starting position:
+		{
+			Set up middle rotor shift
+			for each character in the input sequence:
+			{
+				load right rotor motion
+				compute middle rotor motion
+				store middle rotor motion
+				store middle rotor turnover points
+				apply middle rotor forwards
+				
+			}
+			for each left rotor starting position:
+			{
+				Set up left rotor shift and mapping rotor-reflector-mapping
+				for each character in the input sequence:
+				{
+					load middle turnover points
+					compute left rotor motion
+					apply combined reflector and left rotor bidirectional mapping
+				}
+				for each character in the input sequence:
+				{
+					load middle rotor motion
+					apply middle rotor backwards
+					
+				}
+				for each character in the input sequence:
+				{
+					load right rotor motion
+					apply right rotor backwards
+					
+				}
+				for each character in the input sequence:
+				{
+					apply plugboard
+				}
+				for each character in the input sequence:
+				{
+					compute score
+				}
+			}
+		}
+	}
+}
+```
+This loading these rotor positions is faster thand computing them, this will gain a significant advantage. From an instruction level parallelism this should be the case, as we load a sequence of read-only consequtive memory adresses instead of modifying the same variable over and over. This is exactly the kind of change that benefits ILP. Addiotinally more compuations get pushed out of the inner loop.
+This reduces the runtime to 1625.33ms.
 

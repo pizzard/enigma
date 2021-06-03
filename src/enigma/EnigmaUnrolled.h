@@ -63,23 +63,29 @@ public:
 		}
 	}
 
-	template<class Array>
-	constexpr void precomputeMiddleRotorOffsets(Array& offsets) const
+	template<class Iter, class Array>
+	constexpr void precomputeMiddleRotorOffsets(Iter right_offset,
+			Array& middle_offsets, Array& middle_turnovers) const
 	{
-		int8_t right_shift = rightRotor.currentRotorShift;
 		int8_t middleShift = middleRotor.currentRotorShift;
-		for (auto it = offsets.begin();
-				it != offsets.end();
-				++it)
+		for (auto it = middle_offsets.begin(),
+				to_it = middle_turnovers.begin();
+				it != middle_offsets.end();
+				++it,
+				++to_it,
+				++right_offset)
 		{
-			if(middleRotor.isANotchPosition(middleShift)
-					|| rightRotor.isANotchPosition(right_shift) )
+			if(rightRotor.isOneAfterNotch(*right_offset))
 			{
 				if(++middleShift >= 26)
 					middleShift = 0;
 			}
-			if(++right_shift >= 26)
-				right_shift = 0;
+			else if(middleRotor.isANotchPosition(middleShift))
+			{
+				if(++middleShift >= 26)
+					middleShift = 0;
+				*to_it = 1;
+			}
 			*it =  middleShift;
 		}
 	}
@@ -122,8 +128,9 @@ public:
 			{
 				middleRotor.resetStartingPosition(j);
 				std::array<int8_t, sz> middle_rotor_offsets{};
-				precomputeMiddleRotorOffsets(middle_rotor_offsets);
-
+				std::array<int8_t, sz> middle_rotor_turnovers{0};
+				precomputeMiddleRotorOffsets(right_rotor_offsets.begin(), middle_rotor_offsets,
+						middle_rotor_turnovers);
 				std::array<int8_t, sz> middle_rotor_applied = right_rotor_fw;
 				applyRotor(middle_rotor_applied.begin(),  middle_rotor_applied.end(),
 						middle_rotor_offsets.begin(), middleRotor.mapping.forwardWiring);
@@ -138,24 +145,18 @@ public:
 
 					int8_t right_shift = rightRotor.currentRotorShift;
 					int8_t middleShift = middleRotor.currentRotorShift;
-					for (auto it = begin;
+
+					for (auto it = begin,
+							mrto = middle_rotor_turnovers.begin();
 							it != end;
-							++it)
+							++it,
+							++mrto)
 					{
-						if(rightRotor.isANotchPosition(right_shift))
+						if(*mrto == 1)
 						{
-							if(++middleShift >= 26)
-								middleShift = 0;
-						}
-						else if(middleRotor.isANotchPosition(middleShift))
-						{
-							if(++middleShift >= 26)
-								middleShift = 0;
 							leftRotor.turnover();
 							leftRotorPlusReflector = createCombinedReflector();
 						}
-						if(++right_shift >= 26)
-							right_shift = 0;
 						*it = leftRotorPlusReflector.forward(*it);
 					}
 
@@ -199,7 +200,9 @@ public:
 
 		std::vector<int8_t> middle_rotor_offsets;
 		middle_rotor_offsets.resize(std::distance(begin,end));
-		precomputeMiddleRotorOffsets(middle_rotor_offsets);
+		std::vector<int8_t> middle_rotor_turnovers(std::distance(begin,end), 0);
+		precomputeMiddleRotorOffsets(right_rotor_offsets.begin(),
+				middle_rotor_offsets, middle_rotor_turnovers);
 
 		applyRotor(begin, end, middle_rotor_offsets.begin(), middleRotor.mapping.forwardWiring);
 
